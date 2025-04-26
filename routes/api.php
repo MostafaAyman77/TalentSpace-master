@@ -9,9 +9,9 @@ use App\Http\Controllers\Api\LogoutController;
 use App\Http\Controllers\Api\SocialiteController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\API\FollowController;
-use App\Http\Controllers\Api\NotificationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\Auth\PasswordResetController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -41,14 +41,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/unfollow/{user}', [FollowController::class, 'unfollow']);
     Route::get('/followers/{user}', [FollowController::class, 'followers']);
     Route::get('/following/{user}', [FollowController::class, 'following']);
-
-    // ----------------Notifications----------------
-    Route::get('/notifications', [NotificationController::class, 'index']);
-    Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead']);
-    Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead']);
-    Route::post('/notifications/like', [NotificationController::class, 'sendLikeNotification']);
-    Route::post('/notifications/comment', [NotificationController::class, 'sendCommentNotification']);
-    Route::post('/notifications/follow', [NotificationController::class, 'sendFollowNotification']);
 });
 
 
@@ -64,4 +56,11 @@ Route::middleware(['api', 'web'])->group(function () {
     Route::get('auth/facebook', [SocialiteController::class, 'redirectToFacebook']);
     Route::get('auth/facebook/callback', [SocialiteController::class, 'handleFacebookCallback']);
 
+});
+
+// ------------------OTP-----------------------
+
+Route::prefix('auth')->group(function () {
+    Route::post('/password/otp', [PasswordResetController::class, 'sendOtp']);
+    Route::post('/password/reset', [PasswordResetController::class, 'resetPassword']);
 });
