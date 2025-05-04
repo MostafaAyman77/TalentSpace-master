@@ -59,4 +59,14 @@ class FileMedia extends Model
         return $this->likes()->where('user_id', $user->id)->exists();
     }
 
+    public function getTotalLikesAttribute()
+    {
+        return $this->likes()->count();
+    }
+
+    public function getTotalCommentsAttribute()
+    {
+        return $this->comments()->count();
+    }
+
 }

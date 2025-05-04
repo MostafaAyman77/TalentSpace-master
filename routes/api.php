@@ -16,6 +16,9 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\VideoInteractionController;
 use App\Models\FileMedia;
 use App\Models\Comment;
+use App\Http\Controllers\Api\OfferController;
+use App\Http\Controllers\Api\AdminOfferController;
+use App\Models\Offer; // If using explicit binding
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -100,3 +103,25 @@ Route::prefix('videos/{fileMedia}')->middleware('auth:sanctum')->group(function 
 Route::delete('/comments/{comment}', [VideoInteractionController::class, 'deleteComment'])
     ->middleware('auth:sanctum')
     ->name('videos.comments.destroy');
+// *****************************
+
+
+
+// --- Offer Routes (Investor & Talent) ---
+Route::middleware(["auth:sanctum"])->group(function () {
+    Route::post("/offers", [OfferController::class, "store"])->name("offers.store");
+    Route::get("/offers/sent", [OfferController::class, "indexInvestor"])->name("offers.index.investor");
+    Route::get("/offers/received", [OfferController::class, "indexTalent"])->name("offers.index.talent");
+    Route::post("/offers/{offer}/respond", [OfferController::class, "respond"])->name("offers.respond");
+});
+
+// --- Admin Offer Routes ---
+Route::middleware(["auth:sanctum"]) // <-- إزالة middleware الدور من هنا
+    ->prefix("admin")->name("admin.")->group(function () {
+    Route::get("/offers/pending", [AdminOfferController::class, "indexPending"])->name("offers.index.pending");
+    Route::post("/offers/{offer}/decide", [AdminOfferController::class, "decide"])->name("offers.decide");
+});
+
+
+// Optional: Define explicit route model binding in AppServiceProvider or RouteServiceProvider
+// Route::model("offer", Offer::class);

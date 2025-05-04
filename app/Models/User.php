@@ -76,14 +76,25 @@ class User extends Authenticatable
         return $this->hasMany(ReviewRequest::class, 'reviewed_id');
     }
 
-    public function offerRequestsAsInvestor()
+    public function offersMade(): HasMany
     {
-        return $this->hasMany(OfferRequest::class, 'investor_id');
+        return $this->hasMany(Offer::class, "investor_id");
     }
 
-    public function offerRequestsAsTalent()
+    /**
+     * Get the offers received by the user (as a talent).
+     */
+    public function offersReceived(): HasMany
     {
-        return $this->hasMany(OfferRequest::class, 'talent_id');
+        return $this->hasMany(Offer::class, "talent_id");
+    }
+
+    /**
+     * Get the offers processed by the user (as an admin).
+     */
+    public function offersProcessed(): HasMany
+    {
+        return $this->hasMany(Offer::class, "admin_id");
     }
 
     public function achievementsAsTalent()
@@ -144,4 +155,6 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(FileMedia::class, 'likes', 'user_id', 'file_media_id')->withTimestamps();
     }
+
+
 }
