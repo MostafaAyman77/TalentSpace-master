@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\FileMedia;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -13,55 +14,41 @@ class NewLikeNotification extends Notification implements ShouldQueue
     use Queueable;
 
     public User $liker;
+    public FileMedia $fileMedia;
 
-    /**
-     * Create a new notification instance.
-     */
-    public function __construct(User $liker)
+    public function __construct(User $liker, FileMedia $fileMedia)
     {
         $this->liker = $liker;
+        $this->fileMedia = $fileMedia;
     }
 
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
-     */
     public function via(object $notifiable): array
     {
+        if ($this->liker->id === $this->fileMedia->talent_id) {
+            return [];
+        }
         return ['database', 'broadcast'];
     }
 
-    /**
-     * Get the array representation of the notification for database storage.
-     *
-     * @return array<string, mixed>
-     */
     public function toDatabase(object $notifiable): array
     {
         return [
             'liker_id' => $this->liker->id,
             'liker_name' => $this->liker->name,
-            'liker_picture' => $this->liker->profile_photo_url ?? null,
-            'message' => $this->liker->name . 'liked your post.',
+            'liker_picture' => $this->liker->profilePicture ?? null,
+            'file_media_id' => $this->fileMedia->id,
+            'file_media_thumbnail' => $this->fileMedia->thumbnail,
+            'message' => $this->liker->name . ' liked your video.',
         ];
     }
 
-    /**
-     * Get the broadcastable representation of the notification.
-     */
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
         return new BroadcastMessage([
             'id' => $this->id,
             'read_at' => null,
             'created_at' => now()->toIso8601String(),
-            'data' => [
-                'liker_id' => $this->liker->id,
-                'liker_name' => $this->liker->name,
-                'liker_picture' => $this->liker->profile_photo_url ?? null,
-                'message' => $this->liker->name . 'liked your post.',
-            ]
+            'data' => $this->toDatabase($notifiable)
         ]);
     }
 }

@@ -13,6 +13,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\VideoInteractionController;
+use App\Models\FileMedia;
+use App\Models\Comment;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -66,7 +69,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/password/reset', [PasswordResetController::class, 'resetPassword']);
 });
 
-// **********************
+// ********************** Follow Notification ***********************
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
@@ -75,52 +78,25 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 
+// ********************** comments and likes Notification ***********************
 
+// ... other routes
 
-//
-use App\Models\User;
-use App\Notifications\NewFollowerNotification;
+// Define explicit route model binding if not done globally (optional but good practice)
+// Route::model('fileMedia', FileMedia::class);
+// Route::model('comment', Comment::class);
 
-Route::post('/test-notification', function () {
-    $follower = User::query()->find(1);
-    $target = User::query()->find(2);
+Route::prefix('videos/{fileMedia}')->middleware('auth:sanctum')->group(function () {
+    // Comments Routes
+    Route::get('/comments', [VideoInteractionController::class, 'getComments'])->name('videos.comments.index');
+    Route::post('/add-comment', [VideoInteractionController::class, 'addComment'])->name('videos.comments.store');
 
-    if ($follower && $target) {
-        $target->notify(new NewFollowerNotification($follower));
-        return response()->json(['message' => 'Notification sent']);
-    }
-
-    return response()->json(['error' => 'Users not found'], 404);
+    // Likes Routes
+    Route::post('/toggle-like', [VideoInteractionController::class, 'toggleLike'])->name('videos.likes.toggle');
+    Route::get('/likers', [VideoInteractionController::class, 'getLikers'])->name('videos.likers.index');
 });
 
-// like test
-use App\Notifications\NewLikeNotification;
-
-Route::post('/test-like-notification', function () {
-    $liker = User::query()->find(1);
-    $target = User::query()->find(2);
-
-    if ($liker && $target) {
-        $target->notify(new NewLikeNotification($liker));
-        return response()->json(['message' => 'Like notification sent']);
-    }
-
-    return response()->json(['error' => 'Users not found'], 404);
-});
-
-
-// comment test
-use App\Notifications\NewCommentNotification;
-
-Route::post('/test-comment-notification', function () {
-    $commenter = User::query()->find(1);
-    $target = User::query()->find(2);
-    $commentText = 'Test comment';
-
-    if ($commenter && $target) {
-        $target->notify(new NewCommentNotification($commenter, $commentText));
-        return response()->json(['message' => 'Comment notification sent']);
-    }
-
-    return response()->json(['error' => 'Users not found'], 404);
-});
+// Separate route for deleting a comment
+Route::delete('/comments/{comment}', [VideoInteractionController::class, 'deleteComment'])
+    ->middleware('auth:sanctum')
+    ->name('videos.comments.destroy');
