@@ -12,6 +12,7 @@ use App\Http\Controllers\API\FollowController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
+use App\Http\Controllers\Api\NotificationController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -63,4 +64,63 @@ Route::middleware(['api', 'web'])->group(function () {
 Route::prefix('auth')->group(function () {
     Route::post('/password/otp', [PasswordResetController::class, 'sendOtp']);
     Route::post('/password/reset', [PasswordResetController::class, 'resetPassword']);
+});
+
+// **********************
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount']);
+});
+
+
+
+
+//
+use App\Models\User;
+use App\Notifications\NewFollowerNotification;
+
+Route::post('/test-notification', function () {
+    $follower = User::query()->find(1);
+    $target = User::query()->find(2);
+
+    if ($follower && $target) {
+        $target->notify(new NewFollowerNotification($follower));
+        return response()->json(['message' => 'Notification sent']);
+    }
+
+    return response()->json(['error' => 'Users not found'], 404);
+});
+
+// like test
+use App\Notifications\NewLikeNotification;
+
+Route::post('/test-like-notification', function () {
+    $liker = User::query()->find(1);
+    $target = User::query()->find(2);
+
+    if ($liker && $target) {
+        $target->notify(new NewLikeNotification($liker));
+        return response()->json(['message' => 'Like notification sent']);
+    }
+
+    return response()->json(['error' => 'Users not found'], 404);
+});
+
+
+// comment test
+use App\Notifications\NewCommentNotification;
+
+Route::post('/test-comment-notification', function () {
+    $commenter = User::query()->find(1);
+    $target = User::query()->find(2);
+    $commentText = 'Test comment';
+
+    if ($commenter && $target) {
+        $target->notify(new NewCommentNotification($commenter, $commentText));
+        return response()->json(['message' => 'Comment notification sent']);
+    }
+
+    return response()->json(['error' => 'Users not found'], 404);
 });
